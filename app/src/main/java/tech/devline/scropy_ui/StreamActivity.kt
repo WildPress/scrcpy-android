@@ -51,11 +51,9 @@ class StreamActivity : ComponentActivity() {
         const val EXTRA_PORT = "port"
         const val EXTRA_USB_DEVICE = "usb_device"
 
-        // Battery-friendly streaming defaults (tune freely).
-        // 30 fps and ~4 Mbps roughly halve the encode/decode/Wi-Fi load versus
-        // scrcpy's uncapped default without a visible hit for normal use.
         private const val DEFAULT_MAX_FPS = 30
-        private const val DEFAULT_VIDEO_BIT_RATE = 4_000_000
+        private const val DEFAULT_MAX_SIZE = 1080
+        private const val DEFAULT_VIDEO_BIT_RATE = 2_000_000
     }
 
     // ─── Session state ────────────────────────────────────────────────────────
@@ -155,9 +153,10 @@ class StreamActivity : ComponentActivity() {
 
                 statusText.value  = "Starting server…"
                 session = ScrcpySession.start(
-                    context    = this@StreamActivity,
-                    adb        = adbConn!!,
-                    enableAudio = true,
+                    context      = this@StreamActivity,
+                    adb          = adbConn!!,
+                    enableAudio  = true,
+                    maxSize      = DEFAULT_MAX_SIZE,
                     maxFps       = DEFAULT_MAX_FPS,
                     videoBitRate = DEFAULT_VIDEO_BIT_RATE,
                 )
@@ -176,7 +175,6 @@ class StreamActivity : ComponentActivity() {
                     width   = info.width,
                     height  = info.height,
                     onResize = { w, h ->
-                        // Keep touch coordinate scaling correct across rotation/resize
                         controlSender?.let { it.deviceWidth = w; it.deviceHeight = h }
                     },
                 )
@@ -216,9 +214,10 @@ class StreamActivity : ComponentActivity() {
 
                 statusText.value = "Starting server…"
                 session = ScrcpySession.start(
-                    context     = this@StreamActivity,
-                    adb         = adbConn!!,
-                    enableAudio = true,
+                    context      = this@StreamActivity,
+                    adb          = adbConn!!,
+                    enableAudio  = true,
+                    maxSize      = DEFAULT_MAX_SIZE,
                     maxFps       = DEFAULT_MAX_FPS,
                     videoBitRate = DEFAULT_VIDEO_BIT_RATE,
                 )
@@ -237,7 +236,6 @@ class StreamActivity : ComponentActivity() {
                     width   = info.width,
                     height  = info.height,
                     onResize = { w, h ->
-                        // Keep touch coordinate scaling correct across rotation/resize
                         controlSender?.let { it.deviceWidth = w; it.deviceHeight = h }
                     },
                 )

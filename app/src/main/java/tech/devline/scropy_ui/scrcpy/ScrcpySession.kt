@@ -42,7 +42,7 @@ class ScrcpySession private constructor(
 
         private const val DEVICE_SERVER_PATH = "/data/local/tmp/scrcpy-server.jar"
         private const val SERVER_ASSET       = "scrcpy-server"
-        private const val SCRCPY_VERSION     = "4.1"
+        private const val SCRCPY_VERSION     = "5.0.1"
 
         /**
          * Connect to a running [adb] session and start a scrcpy session.
@@ -51,6 +51,7 @@ class ScrcpySession private constructor(
          * @param maxSize       0 = no limit; otherwise long-edge pixel cap.
          * @param maxFps        0 = server default; otherwise cap frame rate (battery saver).
          * @param videoBitRate  0 = server default (~8 Mbps); otherwise bits/sec.
+         * @param videoCodec    "h264", "h265", or "av1". H.265 gives better quality per bit.
          */
         suspend fun start(
             context: Context,
@@ -59,6 +60,7 @@ class ScrcpySession private constructor(
             maxSize: Int = 0,
             maxFps: Int = 0,
             videoBitRate: Int = 0,
+            videoCodec: String = "h265",
         ): ScrcpySession = withContext(Dispatchers.IO) {
 
             // ── 1. Push server JAR (skip if already up-to-date) ────────────
@@ -93,6 +95,7 @@ class ScrcpySession private constructor(
                 "tunnel_forward=true",
             )
             if (!enableAudio) cmdParts += "audio=false"
+            if (videoCodec != "h264") cmdParts += "video_codec=$videoCodec"
             if (maxSize > 0) cmdParts += "max_size=$maxSize"
             if (maxFps > 0) cmdParts += "max_fps=$maxFps"
             if (videoBitRate > 0) cmdParts += "video_bit_rate=$videoBitRate"
