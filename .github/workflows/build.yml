@@ -23,11 +23,19 @@ jobs:
         run: |
           echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;27.2.12479018"
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ${{ github.workspace }}/release.keystore
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: scrcpy-android
+          KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: scrcpy-android-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: scrcpy-android-release
+          path: app/build/outputs/apk/release/app-release.apk

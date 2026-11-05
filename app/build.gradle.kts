@@ -49,10 +49,14 @@ android {
 
     signingConfigs {
         create("release") {
-            // Only wire up release signing when keystore.properties is present,
-            // otherwise rootProject.file("") throws and even debug builds fail.
+            val envKeystore = System.getenv("KEYSTORE_FILE") ?: ""
             val storeFilePath = keystoreProps.getProperty("storeFile", "")
-            if (storeFilePath.isNotEmpty()) {
+            if (envKeystore.isNotEmpty()) {
+                storeFile = file(envKeystore)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            } else if (storeFilePath.isNotEmpty()) {
                 storeFile = rootProject.file(storeFilePath)
                 storePassword = keystoreProps.getProperty("storePassword")
                 keyAlias = keystoreProps.getProperty("keyAlias")
