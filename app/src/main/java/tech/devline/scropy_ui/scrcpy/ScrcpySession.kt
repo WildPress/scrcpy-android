@@ -60,7 +60,7 @@ class ScrcpySession private constructor(
             maxSize: Int = 0,
             maxFps: Int = 0,
             videoBitRate: Int = 0,
-            videoCodec: String = "h265",
+            videoCodec: String = "h264",
         ): ScrcpySession = withContext(Dispatchers.IO) {
 
             // ── 1. Push server JAR (skip if already up-to-date) ────────────
