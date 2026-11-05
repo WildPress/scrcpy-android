@@ -10,8 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+
+      - name: Fetch boringssl (broken submodule in upstream, no .gitmodules)
+        run: git clone --depth 1 https://boringssl.googlesource.com/boringssl app/src/main/cpp/boringssl
 
       - uses: actions/setup-java@v5
         with:
