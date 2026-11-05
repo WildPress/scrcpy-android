@@ -29,8 +29,8 @@ class AdbConnection private constructor(
         private const val TAG = "AdbConnection"
 
         /**
-         * Connect to the ADB daemon on [host]:[port] over TLS.
-         * The device must have been paired first (Pair tab).
+         * Connect to the ADB daemon on [host]:[port].
+         * Tries TLS/STLS first; falls back to plain TCP for pre-Android 11 devices.
          */
         suspend fun connectTcp(
             context: Context,
@@ -38,14 +38,40 @@ class AdbConnection private constructor(
             port: Int = 5555,
         ): AdbConnection = withContext(Dispatchers.IO) {
             val (priv, pub) = AdbAuthHelper.getOrCreateKeys(context)
-            val handle = AdbTlsSocket.connect(host, port, priv.encoded)
-            val tlsTransport = TlsAdbTransport(handle)
-            AdbConnection(tlsTransport, priv, pub).also {
-                if (!tlsTransport.isStlsPath) {
-                    // TLS-first: need to send CNXN over TLS
-                    it.sendCnxn()
+            try {
+                val handle = AdbTlsSocket.connect(host, port, priv.encoded)
+                val tlsTransport = TlsAdbTransport(handle)
+                AdbConnection(tlsTransport, priv, pub).also {
+                    if (!tlsTransport.isStlsPath) {
+                        it.sendCnxn()
+                    }
+                    it.startReader()
+                    it.waitConnected()
                 }
-                // Start reader AFTER CNXN so the device has data to respond with
+            } catch (e: IOException) {
+                Log.d(TAG, "TLS connect failed (${e.message}), trying plain TCP")
+                val transport = TcpAdbTransport.connect(host, port)
+                AdbConnection(transport, priv, pub).also {
+                    it.sendCnxn()
+                    it.startReader()
+                    it.waitConnected()
+                }
+            }
+        }
+
+        /**
+         * Connect to the ADB daemon on [host]:[port] over plain TCP.
+         * For pre-Android 11 devices that don't support STLS/TLS (e.g. `adb tcpip 5555`).
+         */
+        suspend fun connectPlainTcp(
+            context: Context,
+            host: String,
+            port: Int = 5555,
+        ): AdbConnection = withContext(Dispatchers.IO) {
+            val (priv, pub) = AdbAuthHelper.getOrCreateKeys(context)
+            val transport = TcpAdbTransport.connect(host, port)
+            AdbConnection(transport, priv, pub).also {
+                it.sendCnxn()
                 it.startReader()
                 it.waitConnected()
             }
